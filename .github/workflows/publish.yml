@@ -24,11 +24,11 @@ jobs:
       - name: Get the version from the last push (if available)
         id: last_version
         run: |
-          if [ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]; then
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
             echo "version=" >> "$GITHUB_OUTPUT"
           else
-            git checkout ${{ github.event.before }}
-            echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+            git fetch --no-tags --depth=1 origin ${{ github.event.before }}
+            echo "version=$(git show ${{ github.event.before }}:package.json | jq -r .version)" >> "$GITHUB_OUTPUT"
           fi
       - name: Check if NPM_TOKEN exists
         id: check_token
