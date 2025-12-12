@@ -44,9 +44,16 @@ const MOVE_PAIRS = [
 	['lightscreen', 'reflect'],
 	['sleeptalk', 'rest'],
 	['protect', 'wish'],
+	['spikyshield', 'wish'],
 	['leechseed', 'protect'],
 	['leechseed', 'substitute'],
-	['leechseed', 'burningbulwark'],
+	['moongeistbeam', 'moonlight'],
+	['hex', 'willowisp'],
+	['hex', 'toxic'],
+	['hex', 'thunderwave'],
+	['nightmare', 'willowisp'],
+	['nightmare', 'toxic'],
+	['nightmare', 'thunderwave'],
 ];
 
 /** Pokemon who always want priority STAB, and are fine with it as its only STAB move of that type */
@@ -61,7 +68,7 @@ const NO_LEAD_POKEMON = [
 const DOUBLES_NO_LEAD_POKEMON = [
 	'Basculegion', 'Houndstone', 'Iron Bundle', 'Roaring Moon', 'Zacian', 'Zamazenta',
 ];
-export class RandomDNUTeams extends RandomTeams {
+export class RandomMHSTeams extends RandomTeams {
 	override cullMovePool(
 		types: string[],
 		moves: Set<string>,
@@ -200,6 +207,7 @@ export class RandomDNUTeams extends RandomTeams {
 			[['dragonpulse', 'spacialrend'], 'dracometeor'],
 			['heavyslam', 'flashcannon'],
 			['alluringvoice', 'dazzlinggleam'],
+			['defog', 'rapidspin'],
 
 			// These status moves are redundant with each other
 			['taunt', 'disable'],
@@ -217,34 +225,6 @@ export class RandomDNUTeams extends RandomTeams {
 			['healbell', 'stealthrock'],
 			// Araquanid and Magnezone
 			['mirrorcoat', ['hydropump', 'bodypress']],
-			// Marill
-			['seismictoss', 'liquidation'],
-			// Hatenna
-			['calmmind', 'mysticalfire'],
-			// Jigglypuff
-			[['toxic', 'thunderwave'], 'encore'],
-			['calmmind', 'nastyplot'],
-			// Impidimp
-			['dazzlinggleam', 'thunderwave'],
-			// Combee
-			['lunge', 'bugbuzz'],
-			// Nidoran-F
-			['sludgebomb', 'poisonjab'],
-			// Wattrel
-			['thunder', 'thunderbolt'],
-			['voltswitch', 'uturn'],
-			// Nacli
-			['rockslide', 'stoneedge'],
-			// Cleffa and Impidimp
-			[['alluringvoice', 'dazzlinggleam'], 'drainingkiss'],
-			// Fletchling
-			['bravebird', 'dualwingbeat'],
-			// Gossifleur
-			['sleeppowder', 'stunspore'],
-			// Swablu
-			['defog', 'cottonguard'],
-			// Pidove
-			['nightslash', ['quickattack', 'roost']],
 		];
 
 		for (const pair of incompatiblePairs) this.incompatibleMoves(moves, movePool, pair[0], pair[1]);
@@ -366,14 +346,6 @@ export class RandomDNUTeams extends RandomTeams {
 		if (species.id === 'smeargle') {
 			if (movePool.includes('spore')) {
 				counter = this.addMove('spore', moves, types, abilities, teamDetails, species, isLead, isDoubles,
-					movePool, teraType, role);
-			}
-		}
-
-		// Enforce Focus Energy on Spearow
-		if (species.id === 'spearow') {
-			if (movePool.includes('focusenergy')) {
-				counter = this.addMove('focusenergy', moves, types, abilities, teamDetails, species, isLead, isDoubles,
 					movePool, teraType, role);
 			}
 		}
@@ -649,19 +621,31 @@ export class RandomDNUTeams extends RandomTeams {
 			return this.sample(species.requiredItems);
 		}
 		if (role === 'AV Pivot') return 'Assault Vest';
-		if (species.id === 'pikachu') return 'Light Ball';
-		if (species.id === 'regieleki') return 'Magnet';
-		if (species.id === 'smeargle') return 'Focus Sash';
-		if (species.id === 'nickit') return 'Throat Spray';
-		if (species.id === 'lechonk' && moves.has('stuffcheeks')) return 'Salac Berry';
-		if (species.id === 'spearow') return 'Razor Claw';
-		if (species.id === 'pidove' && moves.has('nightslash')) return 'Scope Lens';
-		if (['shedinja', 'luvdisc', 'nymble', 'fletchling'].includes(species.id)) return 'Heavy-Duty Boots';
-		if ((ability === 'Guts' || moves.has('facade')) && !moves.has('sleeptalk')) {
-			return (types.includes('Fire') || ability === 'Toxic Boost') ? 'Toxic Orb' : 'Flame Orb';
+		// MHS hardcodes
+		if (species.id === 'yiankutku' && moves.has('facade') || species.id === 'bluekutku' && moves.has('facade')) {
+			return 'Frost Orb';
 		}
-		if (ability === 'Sheer Force' && counter.get('sheerforce')) return 'Life Orb';
-		if (moves.has('raindance') || moves.has('sunnyday')) return 'Life Orb';
+		if (species.id === 'xenojiiva' && ability === 'Quark Drive') return 'Booster Energy';
+		if (species.id === 'odogaron' && moves.has('closecombat')) return 'White Herb';
+		if (species.id === 'odogaron' && !moves.has('closecombat')) return 'Sitrus Berry';
+		if (
+			ability === 'Magic Guard' || ability === 'Fervent Scales' ||
+			(ability === 'Sheer Force' && counter.get('sheerforce'))
+		) {
+			return 'Life Orb';
+		}
+		if (moves.has('devour') && ability === 'Unburden') return 'Liechi Berry';
+		if (moves.has('virulentvolley')) return 'Loaded Dice';
+		if (moves.has('magnalance') && ability === 'Reactive Core') return 'Flame Orb';
+		if (moves.has('dragondance') && ability === 'Reactive Core') return 'Frost Orb';
+		// other
+		if (moves.has('substitute')) return 'Leftovers';
+		if (moves.has('protect') && ability !== 'Speed Boost') return 'Leftovers';
+		if (counter.get('skilllink') && ability !== 'Skill Link' && species.id !== 'breloom') return 'Loaded Dice';
+		if (moves.has('shellsmash') && ability !== 'Weak Armor') return 'White Herb';
+		if ((ability === 'Guts' || moves.has('facade')) && !moves.has('sleeptalk')) {
+			return (types.includes('Fire') || ability === 'Toxic Boost' || ability === 'Poison Heal') ? 'Toxic Orb' : 'Flame Orb';
+		}
 		if (['healingwish', 'switcheroo', 'trick'].some(m => moves.has(m))) {
 			if (
 				species.baseStats.spe >= 60 && species.baseStats.spe <= 108 &&
@@ -683,7 +667,7 @@ export class RandomDNUTeams extends RandomTeams {
 			return 'Choice Specs';
 		}
 		if (ability === 'Poison Heal' || ability === 'Quick Feet') return 'Toxic Orb';
-		if (moves.has('acrobatics') && ability !== 'Protosynthesis') return '';
+		if (moves.has('acrobatics') && ability !== 'Quark Drive' && ability !== 'Protosynthesis') return '';
 		if (moves.has('auroraveil') || moves.has('lightscreen') && moves.has('reflect')) return 'Light Clay';
 		if (ability === 'Gluttony') return `${this.sample(['Aguav', 'Figy', 'Iapapa', 'Mago', 'Wiki'])} Berry`;
 		if (
@@ -694,6 +678,10 @@ export class RandomDNUTeams extends RandomTeams {
 		}
 		if (this.dex.getEffectiveness('Rock', species) >= 2) return 'Heavy-Duty Boots';
 		if (species.nfe) return 'Eviolite';
+		if (['Bulky Attacker', 'Bulky Support', 'Bulky Setup'].some(m => role === (m))) return 'Leftovers';
+		if (role === 'Fast Support' || role === 'Fast Bulky Setup') {
+			return (counter.get('Physical') + counter.get('Special') >= 3) ? 'Life Orb' : 'Leftovers';
+		}
 	}
 
 	override randomSet(
@@ -805,25 +793,6 @@ export class RandomDNUTeams extends RandomTeams {
 			ivs.atk = 0;
 		}
 
-		// Hidden Power Grass IVs
-		if (species.id === 'luvdisc' && moves.has('hiddenpower')) {
-			ivs.atk = 0;
-			ivs.spa = 30;
-		}
-
-		// Hidden Power Psychic IVs
-		if (species.id === 'unown') {
-			ivs.atk = 0;
-			ivs.spe = 30;
-		}
-
-		// Hidden Power Fire IVs
-		if (['fomantis', 'nincada', 'petilil', 'cherubi'].includes(species.id) && moves.has('hiddenpower')) {
-			ivs.atk = 0;
-			ivs.spa = 30;
-			ivs.spe = 30;
-		}
-
 		// Enforce Tera Type after all set generation is done to prevent infinite generation
 		if (this.forceTeraType) teraType = this.forceTeraType;
 
@@ -848,7 +817,7 @@ export class RandomDNUTeams extends RandomTeams {
 
 	override randomSets: { [species: string]: RandomTeamsTypes.RandomSpeciesData } = require('./random-sets.json');
 
-	randomDNUTeam() {
+	randomMHSTeam() {
 		this.enforceNoDirectCustomBanlistChanges();
 
 		const seed = this.prng.getSeed();
@@ -872,7 +841,7 @@ export class RandomDNUTeams extends RandomTeams {
 		const typeWeaknesses: { [k: string]: number } = {};
 		const typeDoubleWeaknesses: { [k: string]: number } = {};
 		const teamDetails: RandomTeamsTypes.TeamDetails = {};
-		let numMaxLevelPokemon = 0;
+		// let numMaxLevelPokemon = 0;
 
 		const pokemonList = Object.keys(this.randomSets);
 		const [pokemonPool, baseSpeciesPool] = this.getPokemonPool(type, pokemon, isMonotype, pokemonList);
@@ -890,7 +859,7 @@ export class RandomDNUTeams extends RandomTeams {
 			if (['ogerpon', 'ogerponhearthflame', 'terapagos'].includes(species.id) && teamDetails.teraBlast) continue;
 
 			// Illusion shouldn't be on the last slot
-			if (species.baseSpecies === 'Zoroark' && pokemon.length >= (this.maxTeamSize - 1)) continue;
+			if (species.baseSpecies === 'Sorrowcean' && pokemon.length >= (this.maxTeamSize - 1)) continue;
 
 			const types = species.types;
 			const typeCombo = types.slice().sort().join();
@@ -900,65 +869,6 @@ export class RandomDNUTeams extends RandomTeams {
 			);
 			// Dynamically scale limits for different team sizes. The default and minimum value is 1.
 			const limitFactor = Math.round(this.maxTeamSize / 6) || 1;
-
-			// TEMPORARILY ADJUSTING BALANCE OF THIS BLOCK -- TOO FEW POKEMON TO GENERATE TEAMS
-			// update: reverting these changes, but leaving just in case
-			if (!isMonotype && !this.forceMonotype) {
-				let skip = false;
-
-				// Limit two of any type
-				// ADJUSTING TO 6 -- ADJUST BACK AFTER MORE POKEMON HAVE BEEN ADDED
-				for (const typeName of types) {
-					if (typeCount[typeName] >= 2 /* 6 */ * limitFactor) {
-						skip = true;
-						break;
-					}
-				}
-				if (skip) continue;
-
-				// Limit three weak to any type, and one double weak to any type
-				// ADJUSTING TO 6 -- ADJUST BACK AFTER MORE POKEMON HAVE BEEN ADDED
-				for (const typeName of this.dex.types.names()) {
-					// it's weak to the type
-					if (this.dex.getEffectiveness(typeName, species) > 0) {
-						if (!typeWeaknesses[typeName]) typeWeaknesses[typeName] = 0;
-						if (typeWeaknesses[typeName] >= 3 /* 6 */ * limitFactor) {
-							skip = true;
-							break;
-						}
-					}
-					if (this.dex.getEffectiveness(typeName, species) > 1) {
-						if (!typeDoubleWeaknesses[typeName]) typeDoubleWeaknesses[typeName] = 0;
-						if (typeDoubleWeaknesses[typeName] >= 1 /* 6 */ * Number(limitFactor)) {
-							skip = true;
-							break;
-						}
-					}
-				}
-				if (skip) continue;
-
-				// Count Dry Skin/Fluffy as Fire weaknesses
-				// ADJUSTING TO 6 -- ADJUST BACK AFTER MORE POKEMON HAVE BEEN ADDED
-				if (
-					this.dex.getEffectiveness('Fire', species) === 0 &&
-					Object.values(species.abilities).filter(a => ['Dry Skin', 'Fluffy'].includes(a)).length
-				) {
-					if (!typeWeaknesses['Fire']) typeWeaknesses['Fire'] = 0;
-					if (typeWeaknesses['Fire'] >= 3 /* 6 */ * limitFactor) continue;
-				}
-
-				// Limit four weak to Freeze-Dry
-				// ADJUSTING TO 6 -- ADJUST BACK AFTER MORE POKEMON HAVE BEEN ADDED
-				if (weakToFreezeDry) {
-					if (!typeWeaknesses['Freeze-Dry']) typeWeaknesses['Freeze-Dry'] = 0;
-					if (typeWeaknesses['Freeze-Dry'] >= 4 /* 6 */ * limitFactor) continue;
-				}
-
-				// Limit one level 100 Pokemon
-				if (!this.adjustLevel && (this.getLevel(species, isDoubles) === 100) && numMaxLevelPokemon >= limitFactor) {
-					continue;
-				}
-			}
 
 			// Limit three of any type combination in Monotype
 			if (!this.forceMonotype && isMonotype && (typeComboCount[typeCombo] >= 3 * limitFactor)) continue;
@@ -1026,7 +936,7 @@ export class RandomDNUTeams extends RandomTeams {
 			if (weakToFreezeDry) typeWeaknesses['Freeze-Dry']++;
 
 			// Increment level 100 counter
-			if (set.level === 100) numMaxLevelPokemon++;
+			// if (set.level === 100) numMaxLevelPokemon++;
 
 			// Track what the team has
 			if (set.ability === 'Drizzle' || set.moves.includes('raindance')) teamDetails.rain = 1;
@@ -1061,4 +971,4 @@ export class RandomDNUTeams extends RandomTeams {
 	}
 }
 
-export default RandomDNUTeams;
+export default RandomMHSTeams;
