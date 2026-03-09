@@ -905,11 +905,12 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 	knockoff: {
 		inherit: true,
 		onAfterHit(target, source, move) {
-			if (!target.item || target.itemState.knockedOff) return;
+			if (!target.item) return;
 			if (target.ability === 'multitype') return;
 			const item = target.getItem();
 			if (this.runEvent('TakeItem', target, source, move, item)) {
-				target.itemState.knockedOff = true;
+				target.item = '';
+				target.itemKnockedOff = true;
 				this.add('-enditem', target, item.name, '[from] move: Knock Off', `[of] ${source}`);
 				this.hint("In Gens 3-4, Knock Off only makes the target's item unusable; it cannot obtain a new item.", true);
 			}
@@ -1086,9 +1087,8 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 		flags: { noassist: 1, failcopycat: 1, nosleeptalk: 1, failmimic: 1 },
 		onHit(pokemon) {
 			const moves = this.dex.moves.all().filter(move => (
-				(![2, 4].includes(this.gen) || !pokemon.moves.includes(move.id)) &&
+				move.flags['metronome'] && !pokemon.moves.includes(move.id) &&
 				(!move.isNonstandard || move.isNonstandard === 'Unobtainable') &&
-				move.flags['metronome'] &&
 				!(this.field.pseudoWeather['gravity'] && move.flags['gravity']) &&
 				!(pokemon.volatiles['healblock'] && move.flags['heal'])
 			));
@@ -1331,6 +1331,18 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 	},
 	pursuit: {
 		inherit: true,
+		beforeTurnCallback(pokemon) {
+			if (['frz', 'slp'].includes(pokemon.status) ||
+				(pokemon.hasAbility('truant') && pokemon.volatiles['truant'])) return;
+			for (const target of pokemon.foes()) {
+				target.addVolatile('pursuit');
+				const data = target.volatiles['pursuit'];
+				if (!data.sources) {
+					data.sources = [];
+				}
+				data.sources.push(pokemon);
+			}
+		},
 		condition: {
 			duration: 1,
 			onBeforeSwitchOut(pokemon) {
@@ -1353,7 +1365,12 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 							}
 						}
 					}
-					this.actions.runMove('pursuit', source, source.getLocOf(pokemon));
+					const move = this.dex.getActiveMove('pursuit');
+					source.deductPP(move.id);
+					source.moveUsed(move, pokemon.position);
+					if (this.actions.useMove(move, source, { target: pokemon }) && source.getItem().isChoice) {
+						source.addVolatile('choicelock');
+					}
 				}
 			},
 		},
@@ -1537,19 +1554,6 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 			this.add('-activate', source, 'move: Mimic', move.name);
 		},
 	},
-	skillswap: {
-		inherit: true,
-		onHit(target, source) {
-			const targetAbility = target.ability;
-			const sourceAbility = source.ability;
-			if (targetAbility === sourceAbility || source.hasItem('griseousorb') || target.hasItem('griseousorb')) {
-				return false;
-			}
-			this.add('-activate', source, 'move: Skill Swap');
-			source.setAbility(targetAbility);
-			target.setAbility(sourceAbility);
-		},
-	},
 	sleeptalk: {
 		inherit: true,
 		onTryHit(pokemon) {
@@ -1699,6 +1703,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 	switcheroo: {
 		inherit: true,
 		onTryHit(target, source, move) {
+			if (target.itemKnockedOff || source.itemKnockedOff) return false;
 			if (target.hasAbility('multitype') || source.hasAbility('multitype')) return false;
 		},
 	},
@@ -1815,7 +1820,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 				if (pokemon.hasType('Poison')) {
 					this.add('-sideend', pokemon.side, 'move: Toxic Spikes', `[of] ${pokemon}`);
 					pokemon.side.removeSideCondition('toxicspikes');
-				} else if (pokemon.volatiles['substitute'] || pokemon.hasType('Steel')) {
+				} else if (pokemon.volatiles['substitute'] || pokemon.hasType('Steel') || pokemon.hasAbility('magicguard')) {
 					// do nothing
 				} else if (this.effectState.layers >= 2) {
 					pokemon.trySetStatus('tox', pokemon.side.foe.active[0]);
@@ -1832,6 +1837,7 @@ export const Moves: import('../../../sim/dex-moves').ModdedMoveDataTable = {
 	trick: {
 		inherit: true,
 		onTryHit(target, source, move) {
+			if (target.itemKnockedOff || source.itemKnockedOff) return false;
 			if (target.hasAbility('multitype') || source.hasAbility('multitype')) return false;
 		},
 	},

@@ -1162,8 +1162,8 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	embodyaspectcornerstone: {
 		onStart(pokemon) {
 			if (pokemon.baseSpecies.name === 'Ogerpon-Cornerstone-Tera' && pokemon.terastallized &&
-				this.effectState.embodied !== pokemon.previouslySwitchedIn) {
-				this.effectState.embodied = pokemon.previouslySwitchedIn;
+				!this.effectState.embodied) {
+				this.effectState.embodied = true;
 				this.boost({ def: 1 }, pokemon);
 			}
 		},
@@ -1175,8 +1175,8 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	embodyaspecthearthflame: {
 		onStart(pokemon) {
 			if (pokemon.baseSpecies.name === 'Ogerpon-Hearthflame-Tera' && pokemon.terastallized &&
-				this.effectState.embodied !== pokemon.previouslySwitchedIn) {
-				this.effectState.embodied = pokemon.previouslySwitchedIn;
+				!this.effectState.embodied) {
+				this.effectState.embodied = true;
 				this.boost({ atk: 1 }, pokemon);
 			}
 		},
@@ -1188,8 +1188,8 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	embodyaspectteal: {
 		onStart(pokemon) {
 			if (pokemon.baseSpecies.name === 'Ogerpon-Teal-Tera' && pokemon.terastallized &&
-				this.effectState.embodied !== pokemon.previouslySwitchedIn) {
-				this.effectState.embodied = pokemon.previouslySwitchedIn;
+				!this.effectState.embodied) {
+				this.effectState.embodied = true;
 				this.boost({ spe: 1 }, pokemon);
 			}
 		},
@@ -1201,8 +1201,8 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	embodyaspectwellspring: {
 		onStart(pokemon) {
 			if (pokemon.baseSpecies.name === 'Ogerpon-Wellspring-Tera' && pokemon.terastallized &&
-				this.effectState.embodied !== pokemon.previouslySwitchedIn) {
-				this.effectState.embodied = pokemon.previouslySwitchedIn;
+				!this.effectState.embodied) {
+				this.effectState.embodied = true;
 				this.boost({ spd: 1 }, pokemon);
 			}
 		},
@@ -2017,7 +2017,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 			}
 		},
 		onEnd(pokemon) {
-			if (pokemon.illusion) {
+			if (pokemon.illusion && !pokemon.beingCalledBack) {
 				this.debug('illusion cleared');
 				pokemon.illusion = null;
 				const details = pokemon.getUpdatedDetails();
@@ -2259,12 +2259,12 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	},
 	libero: {
 		onPrepareHit(source, target, move) {
-			if (this.effectState.libero === source.previouslySwitchedIn) return;
+			if (this.effectState.libero) return;
 			if (move.hasBounced || move.flags['futuremove'] || move.sourceEffect === 'snatch' || move.callsMove) return;
 			const type = move.type;
 			if (type && type !== '???' && source.getTypes().join() !== type) {
 				if (!source.setType(type)) return;
-				this.effectState.libero = source.previouslySwitchedIn;
+				this.effectState.libero = true;
 				this.add('-start', source, 'typechange', type, '[from] ability: Libero');
 			}
 		},
@@ -2333,10 +2333,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 				return;
 			}
 			if (this.checkMoveMakesContact(move, source, target, !source.isAlly(target))) {
-				const oldAbility = source.setAbility('lingeringaroma', target);
-				if (oldAbility) {
-					this.add('-activate', target, 'ability: Lingering Aroma', this.dex.abilities.get(oldAbility).name, `[of] ${source}`);
-				}
+				source.setAbility('lingeringaroma', target);
 			}
 		},
 		flags: {},
@@ -2714,10 +2711,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 				return;
 			}
 			if (this.checkMoveMakesContact(move, source, target, !source.isAlly(target))) {
-				const oldAbility = source.setAbility('mummy', target);
-				if (oldAbility) {
-					this.add('-activate', target, 'ability: Mummy', this.dex.abilities.get(oldAbility).name, `[of] ${source}`);
-				}
+				source.setAbility('mummy', target);
 			}
 		},
 		flags: {},
@@ -3309,6 +3303,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 			if (pokemon.species.id === 'zygardecomplete' || pokemon.hp > pokemon.maxhp / 2) return;
 			this.add('-activate', pokemon, 'ability: Power Construct');
 			pokemon.formeChange('Zygarde-Complete', this.effect, true);
+			pokemon.canMegaEvo = pokemon.canMegaEvo === false ? false : this.actions.canMegaEvo(pokemon);
 			pokemon.formeRegression = true;
 		},
 		flags: { failroleplay: 1, noreceiver: 1, noentrain: 1, notrace: 1, failskillswap: 1, cantsuppress: 1 },
@@ -3415,12 +3410,12 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	},
 	protean: {
 		onPrepareHit(source, target, move) {
-			if (this.effectState.protean === source.previouslySwitchedIn) return;
+			if (this.effectState.protean) return;
 			if (move.hasBounced || move.flags['futuremove'] || move.sourceEffect === 'snatch' || move.callsMove) return;
 			const type = move.type;
 			if (type && type !== '???' && source.getTypes().join() !== type) {
 				if (!source.setType(type)) return;
-				this.effectState.protean = source.previouslySwitchedIn;
+				this.effectState.protean = true;
 				this.add('-start', source, 'typechange', type, '[from] ability: Protean');
 			}
 		},
@@ -4254,6 +4249,10 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 				return this.chainModify(0.5);
 			}
 		},
+		onEnd(pokemon) {
+			if (pokemon.beingCalledBack) return;
+			this.add('-end', pokemon, 'Slow Start', '[silent]');
+		},
 		flags: {},
 		name: "Slow Start",
 		rating: -1,
@@ -4721,6 +4720,24 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 		rating: 3,
 		num: 33,
 	},
+	swordofruin: {
+		onStart(pokemon) {
+			if (this.suppressingAbility(pokemon)) return;
+			this.add('-ability', pokemon, 'Sword of Ruin');
+		},
+		onAnyModifyDef(def, target, source, move) {
+			const abilityHolder = this.effectState.target;
+			if (target.hasAbility('Sword of Ruin')) return;
+			if (!move.ruinedDef?.hasAbility('Sword of Ruin')) move.ruinedDef = abilityHolder;
+			if (move.ruinedDef !== abilityHolder) return;
+			this.debug('Sword of Ruin Def drop');
+			return this.chainModify(0.75);
+		},
+		flags: {},
+		name: "Sword of Ruin",
+		rating: 4.5,
+		num: 285,
+	},
 	symbiosis: {
 		onAllyAfterUseItem(item, pokemon) {
 			if (pokemon.switchFlag) return;
@@ -4755,24 +4772,6 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 		name: "Synchronize",
 		rating: 2,
 		num: 28,
-	},
-	swordofruin: {
-		onStart(pokemon) {
-			if (this.suppressingAbility(pokemon)) return;
-			this.add('-ability', pokemon, 'Sword of Ruin');
-		},
-		onAnyModifyDef(def, target, source, move) {
-			const abilityHolder = this.effectState.target;
-			if (target.hasAbility('Sword of Ruin')) return;
-			if (!move.ruinedDef?.hasAbility('Sword of Ruin')) move.ruinedDef = abilityHolder;
-			if (move.ruinedDef !== abilityHolder) return;
-			this.debug('Sword of Ruin Def drop');
-			return this.chainModify(0.75);
-		},
-		flags: {},
-		name: "Sword of Ruin",
-		rating: 4.5,
-		num: 285,
 	},
 	tabletsofruin: {
 		onStart(pokemon) {
@@ -5265,20 +5264,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	},
 	wanderingspirit: {
 		onDamagingHit(damage, target, source, move) {
-			if (source.getAbility().flags['failskillswap'] || target.volatiles['dynamax']) return;
-
-			if (this.checkMoveMakesContact(move, source, target)) {
-				const targetCanBeSet = this.runEvent('SetAbility', target, source, this.effect, source.ability);
-				if (!targetCanBeSet) return targetCanBeSet;
-				const sourceAbility = source.setAbility('wanderingspirit', target);
-				if (!sourceAbility) return;
-				if (target.isAlly(source)) {
-					this.add('-activate', target, 'Skill Swap', '', '', `[of] ${source}`);
-				} else {
-					this.add('-activate', target, 'ability: Wandering Spirit', this.dex.abilities.get(sourceAbility).name, 'Wandering Spirit', `[of] ${source}`);
-				}
-				target.setAbility(sourceAbility);
-			}
+			if (this.checkMoveMakesContact(move, source, target)) this.skillSwap(source, target);
 		},
 		flags: {},
 		name: "Wandering Spirit",
@@ -5477,7 +5463,7 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 	},
 	wonderguard: {
 		onTryHit(target, source, move) {
-			if (target === source || move.category === 'Status' || move.type === '???' || move.id === 'struggle') return;
+			if (target === source || move.category === 'Status' || move.id === 'struggle') return;
 			if (move.id === 'skydrop' && !source.volatiles['skydrop']) return;
 			this.debug('Wonder Guard immunity: ' + move.id);
 			if (target.runEffectiveness(move) <= 0 || !target.runImmunity(move)) {
@@ -5552,13 +5538,14 @@ export const Abilities: import('../sim/dex-abilities').AbilityDataTable = {
 			if (pokemon.baseSpecies.baseSpecies !== 'Palafin') return;
 			if (pokemon.species.forme !== 'Hero') {
 				pokemon.formeChange('Palafin-Hero', this.effect, true);
+				pokemon.heroMessageDisplayed = false;
 			}
 		},
 		onSwitchIn(pokemon) {
 			if (pokemon.baseSpecies.baseSpecies !== 'Palafin') return;
-			if (!this.effectState.heroMessageDisplayed && pokemon.species.forme === 'Hero') {
+			if (!pokemon.heroMessageDisplayed && pokemon.species.forme === 'Hero') {
 				this.add('-activate', pokemon, 'ability: Zero to Hero');
-				this.effectState.heroMessageDisplayed = true;
+				pokemon.heroMessageDisplayed = true;
 			}
 		},
 		flags: { failroleplay: 1, noreceiver: 1, noentrain: 1, notrace: 1, failskillswap: 1, cantsuppress: 1, notransform: 1 },

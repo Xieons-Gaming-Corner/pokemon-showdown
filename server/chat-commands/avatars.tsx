@@ -554,6 +554,7 @@ const OFFICIAL_AVATARS_BRUMIRAGE = new Set([
 	'oleana', 'opal', 'peony', 'pesselle', 'phoebe-gen6', 'piers', 'raihan', 'rei', 'rose', 'sabi', 'sada-ai',
 	'sanqua', 'shielbert', 'sonia', 'sonia-professor', 'sordward', 'sordward-shielbert', 'tateandliza-gen6',
 	'turo-ai', 'victor', 'victor-dojo', 'volo', 'yellgrunt', 'yellgruntf', 'zisu', 'miku-flying', 'miku-ground',
+	'jacinthe', 'rainbowrocketgrunt', 'rainbowrocketgruntf',
 ]);
 
 const OFFICIAL_AVATARS_ZACWEAVILE = new Set([
@@ -641,7 +642,11 @@ const OFFICIAL_AVATARS_KYLEDOVE = new Set([
 	'rosa-pokestar3', 'sabrina-frlg', 'selene-masters', 'sierra', 'spark-casual', 'spark', 'spenser', 'toddsnap', 'toddsnap2',
 	'victor-masters', 'vince', 'wally-rse', 'willow-casual', 'willow', 'yancy', 'zinnia-masters',
 	'acerola-masters3', 'bianca-masters', 'cheren-masters', 'gardenia-masters', 'nemona-masters',
-	'baoba', 'bill', 'daisy', 'harmony', 'paxton', 'trace',
+	'baoba', 'bill', 'daisy', 'harmony', 'paxton', 'trace', 'az-lza', 'brendan-masters2', 'bugsy-masters',
+	'cynthia-masters4', 'elesa-masters3', 'elio-masters', 'erika-masters3', 'iono-masters', 'iono-masters2',
+	'lance-masters2', 'marley-masters', 'may-masters4', 'morty-masters3', 'selene-masters2', 'shauntal-masters',
+	'ansha', 'ansha-cook', 'canari', 'corbeau', 'grisham', 'gwynn', 'ivor', 'lebanne', 'phillipe', 'sbcmember',
+	'tarragon', 'taunie', 'urbain',
 ]);
 
 const OFFICIAL_AVATARS_HYOOPPA = new Set([
@@ -657,7 +662,7 @@ const OFFICIAL_AVATARS_FIFTY = new Set([
 ]);
 
 const OFFICIAL_AVATARS_HORO = new Set([
-	'florian-bb', 'juliana-bb', 'red-lgpe', 'liko', 'roy',
+	'florian-bb', 'juliana-bb', 'red-lgpe', 'liko', 'roy', 'emma-lza', 'lida', 'mable', 'naveen',
 ]);
 
 const OFFICIAL_AVATARS_SELENA = new Set([
